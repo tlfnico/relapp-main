@@ -27,8 +27,9 @@ export async function getUserByEmail(email: string): Promise<DBUser | null> {
       .limit(1);
 
     return results[0] || null;
-  } catch {
-    // Ajuste Obligatorio 7: Sanitizar y proteger consultas e información de base de datos
+  } catch (err) {
+    // Diagnóstico temporal: exponer errores de DB que antes se silenciaban
+    console.error('[DEBUG] getUserByEmail DB ERROR:', err);
     return null;
   }
 }

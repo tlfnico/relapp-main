@@ -5,7 +5,8 @@ import { relevamientos } from './schema/relevamientos';
 import { ROLES } from '../../lib/constants/roles';
 import { eq } from 'drizzle-orm';
 
-const MOCK_PASSWORD_HASH = '$2b$10$CZGIpj4Of8TLfN9YVdgnNuy7S7bAoBwbLb..tiV7SWcAMaypa5hem'
+// Contraseña plana: 'relapp2026'
+const MOCK_PASSWORD_HASH = '$2b$10$CZGIpj4Of8TLfN9YVdgnNuy7S7bAoBwbLb..tiV7SWcAMaypa5hem';
 
 async function main() {
   if (
@@ -45,7 +46,13 @@ async function main() {
           passwordHash: u.passwordHash,
           role: u.role,
         })
-        .onConflictDoNothing({ target: users.email });
+        .onConflictDoUpdate({
+          target: users.email,
+          set: {
+            passwordHash: u.passwordHash,
+            role: u.role,
+          },
+        });
 
       console.log(`✓ Procesado usuario seed: ${u.email}`);
     }
