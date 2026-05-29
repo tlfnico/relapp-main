@@ -9,6 +9,13 @@ import { eq } from 'drizzle-orm';
 const MOCK_PASSWORD_HASH = '$2b$10$isSOFjXHOxzU4Zm30Lupjepy3bAtGnB4X4ll3VEXDsriAiiepluee';
 
 async function main() {
+  if (
+    process.env.NODE_ENV === 'production' ||
+    process.env.VERCEL === '1'
+  ) {
+    throw new Error('Seed bloqueado en producción');
+  }
+
   console.log('🌱 Iniciando la siembra de base de datos (Seed)...');
 
   try {

@@ -10,6 +10,7 @@ import {
   getRelevamientoById,
   softDeleteRelevamiento,
 } from '../services/relevamiento-service';
+import { createAuditLog } from '@/modules/auditoria/services/audit-service';
 
 export interface ActionResponse {
   success: boolean;
@@ -67,6 +68,16 @@ export async function createRelevamientoAction(data: RelevamientoInput): Promise
     if (!result) {
       return { success: false, error: 'Error al persistir el relevamiento en la base de datos.' };
     }
+
+    // Registrar en auditoría
+    await createAuditLog({
+      userId: session.id,
+      userEmail: session.email,
+      action: 'RELEVAMIENTO_CREATED',
+      entityType: 'RELEVAMIENTO',
+      entityId: result.id,
+      metadata: result,
+    });
 
     return { success: true };
   } catch {
@@ -132,6 +143,19 @@ export async function updateRelevamientoAction(id: string, data: RelevamientoInp
       return { success: false, error: 'No se pudo actualizar el relevamiento o este no existe.' };
     }
 
+    // Detectar si pasó a FINALIZADO
+    const isNowFinalized = currentRelevamiento.estado !== 'FINALIZADO' && result.estado === 'FINALIZADO';
+
+    // Registrar en auditoría
+    await createAuditLog({
+      userId: session.id,
+      userEmail: session.email,
+      action: isNowFinalized ? 'RELEVAMIENTO_FINALIZED' : 'RELEVAMIENTO_UPDATED',
+      entityType: 'RELEVAMIENTO',
+      entityId: id,
+      metadata: result,
+    });
+
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al actualizar la información.' };
@@ -162,6 +186,16 @@ export async function softDeleteRelevamientoAction(id: string): Promise<ActionRe
     if (!isDeleted) {
       return { success: false, error: 'El relevamiento no existe o ya ha sido removido.' };
     }
+
+    // Registrar en auditoría
+    await createAuditLog({
+      userId: session.id,
+      userEmail: session.email,
+      action: 'RELEVAMIENTO_DELETED',
+      entityType: 'RELEVAMIENTO',
+      entityId: id,
+      metadata: { id },
+    });
 
     return { success: true };
   } catch {

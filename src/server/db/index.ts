@@ -6,11 +6,13 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import * as usersSchema from './schema/users';
 import * as adultosMayoresSchema from './schema/adultosMayores';
 import * as relevamientosSchema from './schema/relevamientos';
+import * as auditLogsSchema from './schema/auditLogs';
 
 const schema = {
   ...usersSchema,
   ...adultosMayoresSchema,
   ...relevamientosSchema,
+  ...auditLogsSchema,
 };
 
 const connectionString = process.env.DATABASE_URL;

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { verifyJWT } from '@/modules/auth/utils/jwt';
 import { logoutAction } from '@/modules/auth/actions/logoutAction';
 import Link from 'next/link';
+import { ROLES } from '@/lib/constants/roles';
 
 // Importar servicios del dashboard
 import {
@@ -13,6 +14,13 @@ import {
   getMovilidadStats,
 } from '@/modules/dashboard/services/dashboard-service';
 
+// Importar servicios de auditoría
+import {
+  getLoginsDelDiaCount,
+  getOperacionesDelDiaCount,
+  getRecentActivity,
+} from '@/modules/auditoria/services/audit-service';
+
 // Importar componentes del dashboard
 import DashboardStatCard from '@/modules/dashboard/components/DashboardStatCard';
 import DashboardCharts from '@/modules/dashboard/components/DashboardCharts';
@@ -21,6 +29,43 @@ export const metadata = {
   title: 'Dashboard Institucional | RelApp',
   description: 'Métricas, análisis territorial y estadísticas consolidadas en tiempo real.',
 };
+
+function getActionBadge(action: string) {
+  const mapping: Record<string, { label: string; style: string }> = {
+    LOGIN_SUCCESS: { label: 'Login OK', style: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    LOGIN_FAILED: { label: 'Login Error', style: 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse' },
+    LOGOUT: { label: 'Logout', style: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20' },
+    RATE_LIMIT_BLOCKED: { label: 'IP Bloqueada', style: 'bg-red-500/20 text-red-300 border-red-500/30 font-semibold' },
+    ADULTO_MAYOR_CREATED: { label: 'Nuevo Adulto', style: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
+    ADULTO_MAYOR_UPDATED: { label: 'Adulto Editado', style: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    ADULTO_MAYOR_DELETED: { label: 'Adulto Borrado', style: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    RELEVAMIENTO_CREATED: { label: 'Nuevo Relev.', style: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
+    RELEVAMIENTO_UPDATED: { label: 'Relev. Editado', style: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+    RELEVAMIENTO_FINALIZED: { label: 'Relev. Finalizado', style: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-semibold' },
+    RELEVAMIENTO_DELETED: { label: 'Relev. Borrado', style: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  };
+
+  return mapping[action] || { label: action, style: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
+}
+
+function formatRelativeDate(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (60 * 1000));
+  const diffHours = Math.floor(diffMs / (60 * 60 * 1000));
+  const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+
+  if (diffMins < 1) return 'Hace instantes';
+  if (diffMins < 60) return `Hace ${diffMins} min${diffMins > 1 ? 's' : ''}`;
+  if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  if (diffDays === 1) return 'Ayer';
+  if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+
+  return date.toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+  });
+}
 
 export default async function DashboardPage() {
   // 1. Validar sesión JWT server-side
@@ -38,12 +83,24 @@ export default async function DashboardPage() {
   }
 
   // 2. Ejecutar todas las consultas a la base de datos en paralelo
-  const [stats, riesgoData, barriosData, timelineData, movilidadData] = await Promise.all([
+  const [
+    stats,
+    riesgoData,
+    barriosData,
+    timelineData,
+    movilidadData,
+    loginsHoy,
+    operacionesHoy,
+    recentActivity,
+  ] = await Promise.all([
     getDashboardStats(),
     getRiesgoStats(),
     getBarriosStats(),
     getRelevamientosTimeline(),
     getMovilidadStats(),
+    getLoginsDelDiaCount(),
+    getOperacionesDelDiaCount(),
+    getRecentActivity(5),
   ]);
 
   return (
@@ -185,6 +242,88 @@ export default async function DashboardPage() {
               </svg>
             }
           />
+        </section>
+
+        {/* Sección de Auditoría y Seguridad */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Métricas de Auditoría de Hoy */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-md flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Seguridad y Control
+            </h3>
+            <p className="text-xs text-zinc-400">Resumen operativo de accesos y trazabilidad institucional.</p>
+            
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="p-4 bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col gap-1">
+                <span className="text-5xs uppercase tracking-wider font-bold text-zinc-500">Logins Hoy</span>
+                <span className="text-2xl font-bold text-emerald-400">{loginsHoy}</span>
+              </div>
+              <div className="p-4 bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col gap-1">
+                <span className="text-5xs uppercase tracking-wider font-bold text-zinc-500 font-mono">Operaciones Hoy</span>
+                <span className="text-2xl font-bold text-emerald-400">{operacionesHoy}</span>
+              </div>
+            </div>
+
+            {session.role === ROLES.ADMIN && (
+              <Link
+                href="/modules/auditoria"
+                className="mt-auto py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition duration-150 border border-emerald-500/20 text-center shadow-lg shadow-emerald-950/20 flex items-center justify-center gap-2 group cursor-pointer"
+              >
+                <svg className="w-4 h-4 text-emerald-100 group-hover:scale-110 transition duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Panel de Auditoría
+              </Link>
+            )}
+          </div>
+
+          {/* Actividad Reciente */}
+          <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-md flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                <svg className="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Actividad Reciente del Sistema
+              </h3>
+              <span className="text-5xs bg-zinc-850 border border-zinc-800 text-zinc-400 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Últimos 5</span>
+            </div>
+            
+            {recentActivity.length === 0 ? (
+              <p className="text-xs text-zinc-500 italic my-auto text-center py-6">No hay actividad transaccional reportada hoy.</p>
+            ) : (
+              <div className="flex flex-col divide-y divide-zinc-800">
+                {recentActivity.map((log) => {
+                  const badge = getActionBadge(log.action);
+                  return (
+                    <div key={log.id} className="py-2.5 flex justify-between items-center gap-4 text-xs">
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded text-5xs font-bold uppercase border ${badge.style}`}>
+                            {badge.label}
+                          </span>
+                          {log.entityType && (
+                            <span className="text-5xs bg-zinc-950 text-zinc-400 px-1.5 py-0.2 rounded font-bold tracking-wider border border-zinc-850 uppercase">
+                              {log.entityType}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-zinc-400 text-3xs font-medium mt-0.5">
+                          Por: <strong className="text-zinc-300 font-bold">{log.userEmail || 'Sistema Anónimo'}</strong>
+                        </span>
+                      </div>
+                      <span className="text-3xs text-zinc-500 font-medium whitespace-nowrap">
+                        {formatRelativeDate(log.createdAt)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Sección de Gráficos Recharts */}

@@ -31,10 +31,7 @@ export async function proxy(request: NextRequest) {
   // 2. Intentar recuperar la cookie de sesión
   const sessionToken = request.cookies.get('session')?.value;
 
-  console.log(`[PROXY] pathname=${pathname} | cookie presente=${!!sessionToken} | JWT_SECRET=${!!process.env.JWT_SECRET}`);
-
   if (!sessionToken) {
-    console.log('[PROXY] Sin cookie → redirect /login');
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }
@@ -47,8 +44,6 @@ export async function proxy(request: NextRequest) {
     console.error('[PROXY] verifyJWT lanzó excepción:', e);
   }
 
-  console.log(`[PROXY] session=${session ? `ok email=${session.email}` : 'null/inválida'}`);
-
   if (!session) {
     // Si la sesión no es válida, redirigir a login y borrar cookie corrupta/expirada
     const loginUrl = new URL('/login', request.url);
@@ -59,12 +54,10 @@ export async function proxy(request: NextRequest) {
 
   // 4. Validar el rol del usuario
   if (matchedRoute.rolesAllowed && !matchedRoute.rolesAllowed.includes(session.role)) {
-    console.log(`[PROXY] Rol ${session.role} no autorizado para ${pathname}`);
     const unauthorizedUrl = new URL('/unauthorized', request.url);
     return NextResponse.redirect(unauthorizedUrl);
   }
 
-  console.log(`[PROXY] ✅ Acceso permitido para ${session.email} a ${pathname}`);
   return NextResponse.next();
 }
 

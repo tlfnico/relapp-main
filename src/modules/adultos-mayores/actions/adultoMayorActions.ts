@@ -5,6 +5,7 @@ import { verifyJWT } from '@/modules/auth/utils/jwt';
 import { ROLES } from '@/lib/constants/roles';
 import { adultoMayorSchema, AdultoMayorInput } from '../validators/adultoMayor.schema';
 import { createAdultoMayor, updateAdultoMayor, softDeleteAdultoMayor } from '../services/adulto-mayor-service';
+import { createAuditLog } from '@/modules/auditoria/services/audit-service';
 
 export interface ActionResponse {
   success: boolean;
@@ -57,6 +58,16 @@ export async function createAdultoMayorAction(data: AdultoMayorInput): Promise<A
       return { success: false, error: 'Error al registrar al adulto mayor. Es posible que el DNI ya esté registrado.' };
     }
 
+    // Registrar acción en auditoría de forma asíncrona y segura
+    await createAuditLog({
+      userId: session.id,
+      userEmail: session.email,
+      action: 'ADULTO_MAYOR_CREATED',
+      entityType: 'ADULTO_MAYOR',
+      entityId: result.id,
+      metadata: result,
+    });
+
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al procesar la solicitud.' };
@@ -97,6 +108,16 @@ export async function updateAdultoMayorAction(id: string, data: AdultoMayorInput
       return { success: false, error: 'No se pudo actualizar el registro o este no existe.' };
     }
 
+    // Registrar acción en auditoría
+    await createAuditLog({
+      userId: session.id,
+      userEmail: session.email,
+      action: 'ADULTO_MAYOR_UPDATED',
+      entityType: 'ADULTO_MAYOR',
+      entityId: id,
+      metadata: result,
+    });
+
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al actualizar la información.' };
@@ -123,6 +144,16 @@ export async function softDeleteAdultoMayorAction(id: string): Promise<ActionRes
     if (!isDeleted) {
       return { success: false, error: 'El registro no existe o ya ha sido removido.' };
     }
+
+    // Registrar acción en auditoría
+    await createAuditLog({
+      userId: session.id,
+      userEmail: session.email,
+      action: 'ADULTO_MAYOR_DELETED',
+      entityType: 'ADULTO_MAYOR',
+      entityId: id,
+      metadata: { id },
+    });
 
     return { success: true };
   } catch {
