@@ -5,8 +5,7 @@ import { relevamientos } from './schema/relevamientos';
 import { ROLES } from '../../lib/constants/roles';
 import { eq } from 'drizzle-orm';
 
-// Contraseña plana: 'relapp2026'
-const MOCK_PASSWORD_HASH = '$2b$10$isSOFjXHOxzU4Zm30Lupjepy3bAtGnB4X4ll3VEXDsriAiiepluee';
+const MOCK_PASSWORD_HASH = '$2b$10$CZGIpj4Of8TLfN9YVdgnNuy7S7bAoBwbLb..tiV7SWcAMaypa5hem'
 
 async function main() {
   if (
@@ -47,7 +46,7 @@ async function main() {
           role: u.role,
         })
         .onConflictDoNothing({ target: users.email });
-      
+
       console.log(`✓ Procesado usuario seed: ${u.email}`);
     }
 
@@ -105,7 +104,7 @@ async function main() {
         .insert(adultosMayores)
         .values(a)
         .onConflictDoNothing({ target: adultosMayores.dni });
-      
+
       console.log(`✓ Procesado adulto mayor seed: ${a.nombre} ${a.apellido}`);
     }
 
