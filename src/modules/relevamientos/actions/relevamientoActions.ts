@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { verifyJWT } from '@/modules/auth/utils/jwt';
 import { ROLES } from '@/lib/constants/roles';
 import { relevamientoSchema, RelevamientoInput } from '../validators/relevamiento.schema';
@@ -79,6 +80,8 @@ export async function createRelevamientoAction(data: RelevamientoInput): Promise
       metadata: result,
     });
 
+    revalidatePath(`/modules/adultos-mayores/${input.adultoMayorId}`);
+    revalidatePath('/modules/adultos-mayores');
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al procesar la solicitud.' };
@@ -156,6 +159,9 @@ export async function updateRelevamientoAction(id: string, data: RelevamientoInp
       metadata: result,
     });
 
+    revalidatePath(`/modules/adultos-mayores/${currentRelevamiento.adultoMayorId}`);
+    revalidatePath(`/modules/relevamientos/${id}`);
+    revalidatePath('/modules/adultos-mayores');
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al actualizar la información.' };
@@ -182,6 +188,11 @@ export async function softDeleteRelevamientoAction(id: string): Promise<ActionRe
       };
     }
 
+    const currentRelevamiento = await getRelevamientoById(id);
+    if (!currentRelevamiento) {
+      return { success: false, error: 'El relevamiento especificado no existe.' };
+    }
+
     const isDeleted = await softDeleteRelevamiento(id);
     if (!isDeleted) {
       return { success: false, error: 'El relevamiento no existe o ya ha sido removido.' };
@@ -197,6 +208,9 @@ export async function softDeleteRelevamientoAction(id: string): Promise<ActionRe
       metadata: { id },
     });
 
+    revalidatePath(`/modules/adultos-mayores/${currentRelevamiento.adultoMayorId}`);
+    revalidatePath(`/modules/relevamientos/${id}`);
+    revalidatePath('/modules/adultos-mayores');
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al eliminar el relevamiento.' };

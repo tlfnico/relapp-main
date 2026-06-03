@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { verifyJWT } from '@/modules/auth/utils/jwt';
 import { ROLES } from '@/lib/constants/roles';
 import { adultoMayorSchema, AdultoMayorInput } from '../validators/adultoMayor.schema';
@@ -68,6 +69,7 @@ export async function createAdultoMayorAction(data: AdultoMayorInput): Promise<A
       metadata: result,
     });
 
+    revalidatePath('/modules/adultos-mayores');
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al procesar la solicitud.' };
@@ -118,6 +120,8 @@ export async function updateAdultoMayorAction(id: string, data: AdultoMayorInput
       metadata: result,
     });
 
+    revalidatePath('/modules/adultos-mayores');
+    revalidatePath(`/modules/adultos-mayores/${id}`);
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al actualizar la información.' };
@@ -155,6 +159,8 @@ export async function softDeleteAdultoMayorAction(id: string): Promise<ActionRes
       metadata: { id },
     });
 
+    revalidatePath('/modules/adultos-mayores');
+    revalidatePath(`/modules/adultos-mayores/${id}`);
     return { success: true };
   } catch {
     return { success: false, error: 'Ha ocurrido un error inesperado al eliminar el registro.' };

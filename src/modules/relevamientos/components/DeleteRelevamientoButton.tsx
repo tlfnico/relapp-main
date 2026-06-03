@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { softDeleteRelevamientoAction } from '../actions/relevamientoActions';
+import { useToast } from '@/components/Toast';
+import { Trash2 } from 'lucide-react';
 
 interface DeleteRelevamientoButtonProps {
   id: string;
@@ -11,32 +13,35 @@ interface DeleteRelevamientoButtonProps {
 
 export default function DeleteRelevamientoButton({ id, adultoMayorId }: DeleteRelevamientoButtonProps) {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const { showToast } = useToast();
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!confirm('¿Está seguro de que desea eliminar este relevamiento? Esta acción realizará un borrado lógico (Soft Delete).')) {
       return;
     }
 
-    setIsPending(true);
-    const res = await softDeleteRelevamientoAction(id);
+    startTransition(async () => {
+      const res = await softDeleteRelevamientoAction(id);
 
-    if (res.success) {
-      router.push(`/modules/adultos-mayores/${adultoMayorId}`);
-      router.refresh();
-    } else {
-      alert(res.error || 'Ha ocurrido un error al eliminar el relevamiento.');
-      setIsPending(false);
-    }
+      if (res.success) {
+        showToast('El relevamiento ha sido eliminado correctamente.', 'success');
+        router.push(`/modules/adultos-mayores/${adultoMayorId}`);
+      } else {
+        showToast(res.error || 'Ha ocurrido un error al eliminar el relevamiento.', 'error');
+      }
+    });
   };
 
   return (
     <button
       onClick={handleDelete}
       disabled={isPending}
-      className="px-5 py-2.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 active:bg-rose-200 text-rose-700 rounded-xl text-sm font-medium transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+      className="px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 active:bg-rose-500/30 text-rose-400 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm cursor-pointer"
     >
+      <Trash2 className="w-4 h-4" />
       {isPending ? 'Eliminando...' : 'Eliminar Relevamiento'}
     </button>
   );
 }
+
