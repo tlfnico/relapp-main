@@ -41,7 +41,6 @@ export async function loginAction(data: LoginInput): Promise<ActionResponse> {
 
     // 3. Buscar al usuario en la base de datos
     const user = await getUserByEmail(email);
-    console.log('[DEBUG] USER FOUND:', user ? `{ id: ${user.id}, email: ${user.email}, role: ${user.role}, hasHash: ${!!user.passwordHash} }` : 'null');
 
     if (!user) {
       // Registrar intento fallido (usuario inexistente)
@@ -60,7 +59,6 @@ export async function loginAction(data: LoginInput): Promise<ActionResponse> {
 
     // 4. Comparar contraseña con el hash guardado usando bcryptjs
     const isPasswordValid = await bcryptjs.compare(password, user.passwordHash);
-    console.log('[DEBUG] PASSWORD MATCH:', isPasswordValid);
 
     if (!isPasswordValid) {
       // Registrar intento fallido (usuario existente pero contraseña errónea)

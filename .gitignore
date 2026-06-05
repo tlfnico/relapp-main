@@ -43,3 +43,15 @@ next-env.d.ts
 # optional drizzle local files
 drizzle/*.sqlite
 drizzle/*.db
+
+# AI tooling
+.agent/
+.claude/
+.cursor/
+.windsurf/
+.antigravity/
+
+# Logs
+*.log
+
+AGENTS.md

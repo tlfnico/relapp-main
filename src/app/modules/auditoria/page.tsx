@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { verifyJWT } from '@/modules/auth/utils/jwt';
 import { getFilteredAuditLogs } from '@/modules/auditoria/services/audit-service';
 import { ROLES } from '@/lib/constants/roles';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import PageTransition from '@/components/PageTransition';
+import AnimatedEmptyState from '@/components/AnimatedEmptyState';
+import { ArrowLeft, ShieldAlert } from 'lucide-react';
 
 interface PageProps {
   searchParams: Promise<{
@@ -164,21 +168,24 @@ export default async function AuditLogAdminPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 flex flex-col items-center">
-      <div className="w-full max-w-7xl flex flex-col gap-8">
+      <PageTransition className="w-full max-w-7xl flex flex-col gap-8">
         
+        {/* Miga de Pan y Botón Volver */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <Breadcrumbs items={[{ label: 'Auditoría' }]} />
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl text-xs font-semibold transition cursor-pointer self-start md:self-auto"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Volver al Dashboard
+          </Link>
+        </div>
+
         {/* Cabecera Administrativa */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl shadow-black/30">
           <div>
             <div className="flex items-center gap-2.5">
-              <Link
-                href="/dashboard"
-                className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl transition border border-zinc-700/50 mr-2"
-                title="Volver al Dashboard"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </Link>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                   Panel de Auditoría
@@ -304,17 +311,11 @@ export default async function AuditLogAdminPage({ searchParams }: PageProps) {
           </div>
 
           {logs.length === 0 ? (
-            <div className="p-16 text-center flex flex-col items-center gap-4">
-              <div className="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-500 border border-zinc-700/50">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-zinc-300 font-medium">No se encontraron registros de auditoría</p>
-                <p className="text-zinc-500 text-sm mt-1">Intente cambiar los filtros o busque otros términos.</p>
-              </div>
-            </div>
+            <AnimatedEmptyState
+              icon={<ShieldAlert className="w-5 h-5 text-zinc-450" />}
+              title="No se encontraron registros de auditoría"
+              description="Intente cambiar los filtros o busque otros términos."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[900px]">
@@ -437,7 +438,7 @@ export default async function AuditLogAdminPage({ searchParams }: PageProps) {
 
         </section>
 
-      </div>
+      </PageTransition>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   ResponsiveContainer,
   PieChart,
@@ -83,7 +84,12 @@ export default function DashboardCharts({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-8">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-8"
+    >
       {/* 1. Gráfico de Riesgo Social (Donut Chart) */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col justify-between shadow-md">
         <div>
@@ -220,6 +226,6 @@ export default function DashboardCharts({
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

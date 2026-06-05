@@ -28,8 +28,7 @@ export async function getUserByEmail(email: string): Promise<DBUser | null> {
 
     return results[0] || null;
   } catch (err) {
-    // Diagnóstico temporal: exponer errores de DB que antes se silenciaban
-    console.error('[DEBUG] getUserByEmail DB ERROR:', err);
+    console.error('❌ Error al consultar usuario por email [DETALLES SENSIBLES SANITIZADOS]');
     return null;
   }
 }
