@@ -55,3 +55,6 @@ drizzle/*.db
 *.log
 
 AGENTS.md
+docs/UX_MASTER.md
+docs/epics/UX-01-Mobile-Navigation.md
+relapp_technical_status_report.md
